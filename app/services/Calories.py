@@ -1,6 +1,4 @@
-
 import os
-
 import torch
 from pathlib import Path
 import open_clip
@@ -131,11 +129,10 @@ class CalorieCLIP(torch.nn.Module):
         for img in image_paths:
             if isinstance(img, (str, Path)):
                 img = Image.open(img).convert("RGB")
-                input_tensor = self.preprocess(img).unsqueeze(0).to(self.device)
             tensors.append(self.preprocess(img))
         batch = torch.stack(tensors).to(self.device)
         with torch.no_grad():
-            features = self.encode_image(batch)
+            features = self.encode_image(batch).float()
             calories = self.head(features).squeeze(-1)
         return calories.cpu().numpy()
 
