@@ -13,11 +13,17 @@ def main():
         food_name = estimator.get_food_name(image_path)
         calories = estimator.predict(image_path)
 
+<<<<<<< HEAD
         print(f"\n" + "="*30)
         print(f"Image: {image_path.name}")
         print(f"Food: {food_name}")
         print(f"Calories: {calories:.1f} kcal")
         print("="*30 + "\n")
+=======
+        print(f"Image: {image_path.name}")
+        print(f"Food: {food_name}")
+        print(f"Calories: {calories:.1f} kcal")
+>>>>>>> e09fef970b7439ad277e748102846194bef2ddae
     else:
         print(f"Image not found: {image_path}")
 

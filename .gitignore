@@ -1,1 +1,9 @@
+<<<<<<< HEAD
 weights/*pt
+=======
+weights/
+*pt
+
+__pycache__/
+*.pyc
+>>>>>>> e09fef970b7439ad277e748102846194bef2ddae
