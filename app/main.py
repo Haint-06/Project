@@ -7,7 +7,7 @@ def main():
         device="cuda" if torch.cuda.is_available() else "cpu"
     )
 
-    image_path = Path("app/assets/Simple Miso.jpg")  # đổi ảnh test
+    image_path = Path("app/assets/salad.jpg")  # đổi ảnh test
 
     if image_path.exists():
         food_name = estimator.get_food_name(image_path)
