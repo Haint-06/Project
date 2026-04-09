@@ -1,5 +1,6 @@
 import io
 import torch
+import gdown
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -11,25 +12,38 @@ from PIL import Image
 from app.services.Calories import CalorieCLIP
 
 # Đường dẫn tuyệt đối tính từ vị trí file này — .resolve() đảm bảo không bao giờ là relative path
-_HERE    = Path(__file__).resolve().parent          # e:\Code\Project\app\
+_HERE    = Path(__file__).resolve().parent
 _WEIGHTS = _HERE / "services" / "weights" / "calorie_clip.pt"
+MODEL_URL = "https://drive.google.com/uc?id=1JxC7f7nu41MtrqWgrkk-VgQBqhGF77Wk"
 
-# ── Tải mô hình một lần khi server khởi động ──────────────────────────────
+# ── Tải mô hình một lần khi server khởi động
 model = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
+
+    if not _WEIGHTS.exists():
+        print(f"\n[CalorieCLIP] Chưa có model, đang tải từ Google Drive...")
+        _WEIGHTS.parent.mkdir(parents=True, exist_ok=True)
+
+        gdown.download(
+            MODEL_URL, 
+            str(_WEIGHTS), 
+            quiet=False
+        )
+        print("Đang tải model...")
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"\n[CalorieCLIP] Đang tải mô hình trên {device}...")
     model = CalorieCLIP.from_pretrained(model_path=_WEIGHTS, device=device)
     print("[CalorieCLIP] Sẵn sàng! Truy cập http://localhost:8000\n")
     yield
 
-# ── Khởi tạo app ─────────────────────────────────────────────────────────
+# ── Khởi tạo app
 app = FastAPI(title="CalorieCLIP API", version="1.0.0", lifespan=lifespan)
 
-# ── CORS: cho phép mọi origin (localhost file://, port 7654, v.v.) ────────
+# ── CORS: cho phép mọi origin (localhost file://, port 7654, v.v.)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,7 +51,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Serve frontend tĩnh từ app/static/ ───────────────────────────────────
+# ── Serve frontend tĩnh từ app/static/
 _static = Path(__file__).parent / "static"
 _static.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(_static)), name="static")
@@ -49,13 +63,16 @@ async def root():
         return FileResponse(str(index))
     return {"message": "CalorieCLIP API đang chạy. Gửi POST /predict với field 'file'."}
 
-# ── POST /predict ─────────────────────────────────────────────────────────
+# ── POST /predict
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     """
     Nhận ảnh thực phẩm, trả về tên món và calo ước tính.
     Response: { "food": "Greek Salad", "calories": 494.8, "unit": "kcal" }
     """
+    if model is None:
+        raise HTTPException(503, "Model chưa sẵn sàng")
+
     if not file.content_type.startswith("image/"):
         raise HTTPException(400, f"Cần file ảnh, nhận được: {file.content_type}")
 
@@ -68,9 +85,13 @@ async def predict(file: UploadFile = File(...)):
     food     = model.get_food_name(image)
     calories = model.predict(image, use_tta=True)
 
-    return {"food": food, "calories": round(calories, 1), "unit": "kcal"}
+    return {
+        "food": food,
+        "calories": round(calories, 1),
+        "unit": "kcal"
+    }
 
-# ── Health check ──────────────────────────────────────────────────────────
+# ── Health check
 @app.get("/health")
 async def health():
     return {"status": "ok", "model_loaded": model is not None}

@@ -21,7 +21,7 @@ except ImportError:
 import torchvision.transforms.functional as TF
 
 
-# ─── Khối hồi quy (Regression Head) ────────────────────────────────────────
+# ─── Khối hồi quy (Regression Head)
 
 class RegressionHead(nn.Module):
     """
@@ -56,7 +56,7 @@ class RegressionHead(nn.Module):
         return self.net(x)
 
 
-# ─── Mô hình chính ──────────────────────────────────────────────────────────
+# ─── Mô hình chính
 
 class CalorieCLIP(nn.Module):
     """
@@ -97,7 +97,7 @@ class CalorieCLIP(nn.Module):
             self.food_labels = ["food"]
             print("Cảnh báo: không tìm thấy food_labels.json — dùng nhãn mặc định")
 
-    # ── Tải mô hình từ file checkpoint ──────────────────────────────────────
+    # ── Tải mô hình từ file checkpoint
 
     @classmethod
     def from_pretrained(cls, model_path=None, device="cpu"):
@@ -109,7 +109,7 @@ class CalorieCLIP(nn.Module):
                         Nếu None → tự động tìm trong thư mục weights/ cùng cấp.
             device:     "cpu" hoặc "cuda"
         """
-        # ── Xác định đường dẫn checkpoint ───────────────────────────────────
+        # ── Xác định đường dẫn checkpoint
         if model_path is None:
             # Mặc định: tìm file trong thư mục weights/ cùng thư mục với file này
             services_dir = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
@@ -139,7 +139,7 @@ class CalorieCLIP(nn.Module):
             weights_file = model_path
             config = {"base_model": "ViT-B-32", "pretrained": "openai"}
 
-        # ── Tải CLIP backbone ────────────────────────────────────────────────
+        # ── Tải CLIP backbone
         # create_model_and_transforms trả về: (model, train_transform, val_transform)
         # Chỉ cần val_transform (preprocess) cho inference
         clip_model, _, preprocess = open_clip.create_model_and_transforms(
