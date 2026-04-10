@@ -1,5 +1,0 @@
-torch>=2.11.0
-open-clip-torch>=3.3.0
-pillow>=12.2.0
-numpy>=2.4.4
-openai>=0.26.5

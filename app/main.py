@@ -1,13 +1,3 @@
-"""
-file model của em quá lớn
-em lưu model ở link drive này ạ:
-https://drive.google.com/drive/folders/1C5SYsmEFit5A3PrjlTT4Bz9KQ4bH_Gag?usp=sharing
-
-tải xong thầy cô để vào file weights trong app/services/weights ạ
-"""
-
-
-
 import torch
 from pathlib import Path
 from app.services.Calories import load_model

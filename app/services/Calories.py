@@ -1,9 +1,3 @@
-"""
-CalorieCLIP — Ước tính calo thực phẩm từ ảnh
-Tác giả gốc: HaploLLC/CalorieCLIP
-Phiên bản này: tích hợp thêm nhận diện tên món ăn (zero-shot)
-               và kỹ thuật TTA (Test-Time Augmentation) để tăng độ chính xác.
-"""
 
 import os
 import json
@@ -24,11 +18,7 @@ import torchvision.transforms.functional as TF
 # ─── Khối hồi quy (Regression Head)
 
 class RegressionHead(nn.Module):
-    """
-    Mạng nơ-ron nhỏ nhận vector đặc trưng ảnh từ CLIP (512 chiều)
-    và dự đoán lượng calo (scalar) tương ứng.
-    Kiến trúc này PHẢI khớp với kiến trúc dùng khi huấn luyện checkpoint.
-    """
+
     def __init__(self, input_dim=512):
         super().__init__()
         self.net = nn.Sequential(
@@ -60,17 +50,11 @@ class RegressionHead(nn.Module):
 
 class CalorieCLIP(nn.Module):
     """
-    CalorieCLIP: kết hợp bộ mã hóa ảnh CLIP (ViT-B/32)
-    với một đầu hồi quy tuỳ chỉnh để ước tính calo.
-
-    Chỉ số hiệu năng (theo tác giả):
+    Chỉ số hiệu năng:
       - MAE: ~54.3 calo
       - 60.7% dự đoán sai lệch dưới 50 calo
       - 81.5% dự đoán sai lệch dưới 100 calo
 
-    Tính năng bổ sung (phiên bản này):
-      - get_food_name(): nhận diện tên món ăn bằng zero-shot CLIP
-      - predict(): dùng TTA (4 biến thể ảnh) để giảm phương sai dự đoán
     """
 
     def __init__(self, clip_model, preprocess, regression_head, device="cpu"):
@@ -189,13 +173,7 @@ class CalorieCLIP(nn.Module):
     # ── Mã hóa ảnh thành vector đặc trưng ───────────────────────────────────
 
     def encode_image(self, image_tensor):
-        """
-        Đưa tensor ảnh qua CLIP encoder để lấy vector đặc trưng.
 
-        Lưu ý quan trọng (theo tác giả): KHÔNG chuẩn hóa (normalize) vector
-        đặc trưng. Quá trình huấn luyện không dùng chuẩn hóa nên
-        chuẩn hóa khi inference sẽ làm lệch phân phối đầu vào của head.
-        """
         with torch.no_grad():
             features = self.clip_model.encode_image(image_tensor).float()
         return features
@@ -203,21 +181,12 @@ class CalorieCLIP(nn.Module):
     # ── Phân loại tên món ăn (zero-shot) ────────────────────────────────────
 
     def get_food_name(self, image_path):
-        """
-        Dùng CLIP để so sánh ảnh với danh sách nhãn món ăn và trả về
-        tên món khớp nhất (zero-shot classification).
-
-        Cách hoạt động:
-          1. Mã hóa ảnh → vector ảnh
-          2. Mã hóa từng nhãn văn bản → vector văn bản
-          3. Tính cosine similarity giữa vector ảnh và tất cả vector văn bản
-          4. Chọn nhãn có similarity cao nhất
-        """
         # Tải và tiền xử lý ảnh
+        # Đảm bảo image luôn là PIL Image RGB trước khi đưa vào preprocess
         if isinstance(image_path, (str, Path)):
             image = Image.open(image_path).convert("RGB")
         else:
-            image = image_path.convert("RGB")
+            image = image_path
 
         tensor = self.preprocess(image).unsqueeze(0).to(self.device)
 
@@ -249,24 +218,12 @@ class CalorieCLIP(nn.Module):
     # ── Dự đoán calo (single image + TTA) ───────────────────────────────────
 
     def predict(self, image_path, use_tta=True):
-        """
-        Ước tính calo từ một ảnh đơn.
 
-        Tham số:
-            image_path: đường dẫn ảnh (str/Path) hoặc PIL Image
-            use_tta:    True → dùng Test-Time Augmentation (khuyến nghị)
-                        False → dự đoán nhanh hơn, nhưng ít ổn định hơn
-
-        TTA (Test-Time Augmentation):
-            Thay vì dự đoán một lần, mô hình dự đoán trên 4 biến thể của ảnh
-            rồi lấy trung bình. Điều này giảm phương sai và tăng độ ổn định,
-            đặc biệt với ảnh thực tế (góc chụp, chiều sáng thay đổi).
-        """
         # Tải ảnh
         if isinstance(image_path, (str, Path)):
             image = Image.open(image_path).convert("RGB")
         else:
-            image = image_path.convert("RGB")
+            image = image_path
 
         if use_tta:
             # Tạo 4 biến thể ảnh để TTA
@@ -298,12 +255,7 @@ class CalorieCLIP(nn.Module):
     # ── Dự đoán calo theo batch ──────────────────────────────────────────────
 
     def predict_batch(self, image_paths):
-        """
-        Dự đoán calo cho nhiều ảnh cùng lúc (batch inference).
-        Hiệu quả hơn gọi predict() nhiều lần vì giảm overhead GPU.
 
-        Trả về: numpy array chứa calo dự đoán cho từng ảnh.
-        """
         tensors = []
         for img in image_paths:
             if isinstance(img, (str, Path)):
@@ -331,15 +283,7 @@ class CalorieCLIP(nn.Module):
 # ─── Hàm tiện ích ───────────────────────────────────────────────────────────
 
 def load_model(device="cpu"):
-    """
-    Tải CalorieCLIP với đường dẫn mặc định (weights/ cùng thư mục).
-    Hàm tiện ích để import nhanh từ bên ngoài.
 
-    Ví dụ:
-        from app.services.Calories import load_model
-        model = load_model(device="cuda")
-        calories = model.predict("food.jpg")
-    """
     # Xây dựng đường dẫn tuyệt đối để không phụ thuộc vào thư mục làm việc hiện tại
     weights_path = Path(os.path.dirname(os.path.abspath(__file__))) / "weights" / "calorie_clip.pt"
     return CalorieCLIP.from_pretrained(model_path=weights_path, device=device)

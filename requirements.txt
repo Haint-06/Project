@@ -1,0 +1,16 @@
+# --- Web Server ---
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9
+
+# --- AI & Deep Learning ---
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.38.0
+open-clip-torch>=2.24.0
+sentencepiece
+
+# --- Tools & Utilities ---
+pillow>=10.0.0
+numpy>=1.26.0
+gdown>=5.0.0

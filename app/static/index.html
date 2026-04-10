@@ -297,6 +297,42 @@
       margin-left: 6px;
     }
 
+    .result-ingredients {
+      margin-top: 18px;
+    }
+    
+    .inrgredient-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-soft);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    #ingredientList {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0;
+    }
+
+    #ingredientList li {
+      background: var(--accent-pale);
+      color: var(--accent-mid);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: transform 0.2s ease;
+    }
+    #ingredientList li:hover {
+      transform: scale(1.05);
+      border-color: var(--border);
+    }
+
     .result-note {
       font-size: 12px;
       color: var(--text-soft);
@@ -426,9 +462,13 @@
           <span id="resultCalories">—</span>
           <span class="unit">kcal</span>
         </div>
+        <div class="result-ingredients">
+            <p class="ingredient-title">Nguyên liệu:</p>
+            <ul id="ingredientList"></ul>
+        </div>
         <p class="result-note">
-          Devoloped by Group 5 - Software Engineering <br/>
-          Object Decetion & CLIP for Calorie Estimation
+          Developed by Group 5 - Software Engineering <br/>
+          Object Detection & CalorieCLIP for Calorie Estimation
         </p>
       </div>
 
@@ -447,8 +487,8 @@
 
 <script>
   // ── Config ──────────────────────────────────────────────────────────────
-  // Đổi URL này thành địa chỉ server của bạn khi backend đã chạy
-  const API_URL = "http://localhost:8000/predict";
+  // Đổi URL này thành địa chỉ server của bạn khi backend đã chạy http://localhost:8000/predict
+  const API_URL = window.location.origin + "/predict";
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const uploadZone        = document.getElementById("uploadZone");
@@ -464,6 +504,7 @@
   const resultFoodName    = document.getElementById("resultFoodName");
   const resultCalories    = document.getElementById("resultCalories");
   const errorText         = document.getElementById("errorText");
+  const ingredientList    = document.getElementById("ingredientList");
 
   let selectedFile = null;
 
@@ -569,6 +610,17 @@
       resultCalories.textContent  = data.calories != null
         ? Number(data.calories).toFixed(1)
         : "—";
+
+      //reder ingredient list
+      ingredientList.innerHTML = "";
+
+      if (data.ingredients && data.ingredients.length > 0) {
+        data.ingredients.forEach(item => {
+          const li = document.createElement("li");
+          li.textContent = item.ingredient;
+          ingredientList.appendChild(li);
+        });
+      }
 
       showResponseState("result");
 

@@ -1,4 +1,7 @@
-app/services/weights/*pt
-app/services/__pycache__
-app/__pycache__
-app/static/__pycache__
+__pycache__/
+*.py[cod]
+
+app/services/weights/*.pt
+
+.vscode/
+.idea/
