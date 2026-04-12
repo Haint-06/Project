@@ -45,6 +45,9 @@ async def lifespan(app: FastAPI):
     print(f"\n[CalorieCLIP] Đang tải mô hình trên {device}...")
     model = CalorieCLIP.from_pretrained(model_path=_WEIGHTS, device=device)
 
+    import asyncio
+    await asyncio.sleep(2) # nghỉ 2s giải phóng bộ nhớ sau khi tải model
+
     if device == "cpu":
         torch.set_num_threads(4)  # Giới hạn số thread CPU để tránh quá tải
     else:
