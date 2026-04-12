@@ -71,6 +71,9 @@ app.mount("/static", StaticFiles(directory=str(_static)), name="static")
 
 @app.get("/")
 async def root():
+    index = _static / "index.html"
+    if index.exists():
+        return FileResponse(str(index))
     return {"status": "online"}
 
 
