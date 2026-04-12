@@ -10,6 +10,7 @@ torchvision
 transformers
 open-clip-torch
 sentencepiece
+protobuf
 
 # --- Tools & Utilities ---
 pillow>=10.0.0
